@@ -1,6 +1,5 @@
 from aiogram import BaseMiddleware
 from aiogram import types
-from database import Database
 
 
 class RegistrationMiddleware(BaseMiddleware):

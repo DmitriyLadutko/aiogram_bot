@@ -20,7 +20,7 @@ ENV/
 
 .DS_Store
 Thumbs.db
-
+*.db
 *.log
 
 .coverage
