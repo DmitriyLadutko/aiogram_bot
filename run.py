@@ -15,7 +15,6 @@ logger = logging.getLogger(__name__)
 load_dotenv()
 
 TG_API_KEY = os.getenv("TG_API_KEY")
-CITY = os.getenv("CITY")
 URL = os.getenv("URL")
 
 if not TG_API_KEY:
