@@ -12,7 +12,7 @@ from midleware import RegistrationMiddleware
 from fsm import UserRegistration, RequestState, ReminderState
 
 class BotHandlers:
-    ADMINS = [7678570149]
+    ADMINS = []
     REQUESTS_PER_PAGE = 3
 
     def __init__(self, url: str):
