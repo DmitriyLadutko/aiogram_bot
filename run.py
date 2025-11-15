@@ -1,39 +1,39 @@
 import asyncio
-import logging
 import os
-from aiogram import Bot, Dispatcher
 from dotenv import load_dotenv
+
+from aiogram import Bot, Dispatcher
+from aiogram.fsm.storage.memory import MemoryStorage
+
+from database import Database
 from handlers import BotHandlers
-from database import init_db
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s | %(levelname)s | %(name)s | %(message)s",
-)
-
-logger = logging.getLogger(__name__)
 load_dotenv()
-
-TG_API_KEY = os.getenv("TG_API_KEY")
+TOKEN = os.getenv("TG_API_KEY")
+DB_PATH = os.getenv("DB_PATH") or "bot.db"
 URL = os.getenv("URL")
 
-if not TG_API_KEY:
-    raise SystemExit("Не найдены токены")
 
-bot = Bot(TG_API_KEY)
-dp = Dispatcher()
-handlers = BotHandlers(url=URL)
-
-
-# --- Запуск ---
 async def main():
+    if not TOKEN:
+        raise RuntimeError("TG_API_KEY не задан в .env")
+
+    bot = Bot(token=TOKEN)
+    storage = MemoryStorage()
+    dp = Dispatcher(storage=storage)
+
+    handlers = BotHandlers(url=URL)
     dp.include_router(handlers.router)
-    await init_db()
-    await dp.start_polling(bot)
+
+    await Database.init(DB_PATH)
+    await Database.init_db()
+
+    try:
+        await dp.start_polling(bot)
+    finally:
+        await Database.close()
+        await bot.session.close()
 
 
 if __name__ == "__main__":
-    try:
-        asyncio.run(main())
-    except KeyboardInterrupt:
-        logger.warning(f"Ручная остановка")
+    asyncio.run(main())

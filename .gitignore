@@ -22,6 +22,8 @@ ENV/
 Thumbs.db
 *.db
 *.log
+*.db-shm
+*.db-wal
 
 .coverage
 htmlcov/

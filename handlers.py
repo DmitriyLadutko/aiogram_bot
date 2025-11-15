@@ -1,7 +1,7 @@
 import aiohttp
 import asyncio
 
-from aiogram import F, types, Router, Bot
+from aiogram import F, types, Router, Bot, exceptions
 from aiogram.filters import CommandStart
 from aiogram.utils.keyboard import InlineKeyboardBuilder, ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardButton
 from aiogram.fsm.context import FSMContext
@@ -372,13 +372,48 @@ class BotHandlers:
         await callback.answer()
 
     async def cancel_request(self, callback: types.CallbackQuery):
-        request_id = int(callback.data.split(":")[1])
-        await Database.delete_request(request_id)
-        await callback.message.edit_text("❌ Заявка отменена")
+        await callback.answer()
+        parts = callback.data.split(sep=":", maxsplit=1)
+        if len(parts) < 2:
+            return
+        try:
+            request_id = int(parts[1])
+        except ValueError:
+            await callback.answer("Неверный id заявки", show_alert=False)
+            return
+        try:
+            deleted = await Database.delete_request(request_id)
+        except Exception:
+            await callback.answer("Ошибка при работе с БД", show_alert=False)
+            return
+        if deleted:
+            try:
+                await callback.message.edit_reply_markup(reply_markup=None)
+            except exceptions.TelegramBadRequest:
+                pass
+        else:
+            await callback.answer("Заявка не найдена или уже удалена", show_alert=False)
 
     async def change_status(self, callback: types.CallbackQuery):
-        parts = callback.data.split(":")
-        request_id = int(parts[1])
+        await callback.answer()
+        parts = callback.data.split(sep=":", maxsplit=2)
+        if len(parts) < 3:
+            return
+        try:
+            request_id = int(parts[1])
+        except ValueError:
+            await callback.answer("Неверный id заявки", show_alert=False)
+            return
         status = parts[2]
-        await Database.update_request_status(request_id, status)
-        await callback.message.edit_text(f"Статус обновлен: {status}")
+        try:
+            updated = await Database.update_request_status(request_id, status)
+        except Exception:
+            await callback.answer("Ошибка при работе с БД", show_alert=False)
+            return
+        if updated:
+            try:
+                await callback.message.edit_reply_markup(reply_markup=None)
+            except exceptions.TelegramBadRequest:
+                pass
+        else:
+            await callback.answer("Заявка не найдена", show_alert=False)
